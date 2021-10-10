@@ -1,0 +1,130 @@
+---
+title: "Check clean data"
+output: html_notebook
+---
+
+This script checks the clean datasets. 
+
+```{r, include= FALSE}
+library(here)
+library(tidyverse)
+```
+
+
+# 1. Le Monde
+
+```{r}
+dat <- here("data","clean_newspapers","lemonde.rds") %>% read_rds()
+dat %>% glimpse
+dat %>% skimr::skim()
+```
+
+```{r}
+dat %>% 
+  filter(date > "1985-01-01") %>% 
+  mutate(date = lubridate::as_date(date)) %>% 
+  ggplot(aes(date)) + geom_histogram(binwidth = 7) + 
+  theme_bw() 
+```
+
+# 2. Le Figaro
+
+```{r}
+dat <- here("data","clean_newspapers","figaro.rds") %>% read_rds()
+dat %>% glimpse
+dat %>% skimr::skim()
+```
+
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date)) %>% 
+  ggplot(aes(date)) + geom_histogram(binwidth = 7) + 
+  theme_bw() 
+```
+
+
+# 3. La Repubblica
+
+```{r}
+dat <- here("data","clean_newspapers","repubblica.rds") %>% read_rds()
+dat %>% glimpse
+dat %>% skimr::skim()
+```
+
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date)) %>% 
+  ggplot(aes(date)) + geom_histogram(binwidth = 7) + 
+  theme_bw() 
+```
+
+
+
+
+# 4. Le Corriere della Sera
+
+```{r}
+dat <- here("data","clean_newspapers","corriere.rds") %>% read_rds()
+dat %>% glimpse
+dat %>% skimr::skim()
+```
+
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date)) %>% 
+  ggplot(aes(date)) + geom_histogram(binwidth = 7) + 
+  theme_bw() 
+```
+
+
+# 5. El Mundo
+
+```{r}
+dat <- here("data","clean_newspapers","elmundo.rds") %>% read_rds()
+dat %>% glimpse
+dat %>% skimr::skim()
+```
+
+```{r}
+dat %>% 
+  filter(date > "1900-01-01") %>% 
+  mutate(date = lubridate::as_date(date)) %>% 
+  ggplot(aes(date)) + geom_histogram(binwidth = 7) + 
+  theme_bw() 
+```
+
+
+# 6. El Pais
+
+```{r}
+dat <- here("data","clean_newspapers","elpais.rds") %>% read_rds()
+dat %>% glimpse
+dat %>% skimr::skim()
+```
+
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date)) %>% 
+  ggplot(aes(date)) + geom_histogram(binwidth = 7) + 
+  theme_bw() 
+```
+
+
+
+# 7. Publico
+
+```{r}
+dat <- here("data","clean_newspapers","publico.rds") %>% read_rds()
+dat %>% glimpse
+dat %>% skimr::skim()
+```
+
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date)) %>% 
+  ggplot(aes(date)) + geom_histogram(binwidth = 7) + 
+  theme_bw() 
+```
+
+
+
