@@ -6,7 +6,7 @@
 ##
 ## Tatiana Coutto
 ##
-## October 2021
+## December 2021
 ## 
 
 library(tidyverse)
@@ -33,6 +33,34 @@ mdat %>% count(is.na(date))
 mdat %>% 
   filter(date > "1985-01-01") %>%
   ggplot(aes(date)) + geom_histogram(binwidth = 24*7) 
+
+# Remove articles that DO NOT have either 
+# europ or bruxelles or brexit in the title or body
+# mdat %>% 
+#   filter(!is.na(date)) %>% 
+#   count( 
+#   date >= "2005-01-01", 
+#   str_detect(str_to_lower(title), "europ|brexit"))
+
+mdat <- mdat %>% filter(str_detect(str_to_lower(title), "europ|brexit") |
+                  str_detect(str_to_lower(body), "europ|brexit"))
+
+# Issues with newpaper variable for a few (very few articles)
+# For these articles, the date is instead of the newspaper, we amend this. 
+mdat %>% count(newspaper)
+
+mdat <- mdat %>% filter((newspaper %>% str_to_lower() %>% str_detect("cor"))) %>%  
+  bind_rows(
+    mdat %>% filter(!(newspaper %>% str_to_lower() %>% str_detect("cor"))) %>% 
+      mutate(date = newspaper %>% lubridate::dmy(locale="fr_fr"), 
+             newspaper = "Corriere della Sera")
+  )
+  
+mdat %>% glimpse
+
+# Harmonise newspaper name
+mdat <- mdat %>% 
+  mutate(newspaper = "Corriere della Sera")
 
 # Save the data
 mdat %>% 

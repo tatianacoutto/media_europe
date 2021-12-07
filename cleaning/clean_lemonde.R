@@ -55,6 +55,14 @@ dat %>% glimpse
 dat %>% glimpse
 dat %>% select(url) %>% distinct() %>% dim()
 
+# Filter europ/brexit in title/body
+dat <- dat %>% filter(str_detect(str_to_lower(title), "europ|brexit") |
+                        str_detect(str_to_lower(body), "europ|brexit"))
+
+# Clean ugly dates
+dat <- dat %>% 
+  filter(!is.na(date)) %>% 
+  filter(date > "1985-01-01")
+
 # Save the data
 dat %>% write_rds(here("data","clean_newspapers","lemonde.rds"))
-

@@ -72,6 +72,10 @@ dat %>% count(date < "1980-01-01")
 dat %>% glimpse
 dat %>% select(url) %>% distinct() %>% dim()
 
+# Filter europ brexit
+dat <- dat %>% filter(str_detect(str_to_lower(title), "europ|brexit") |
+                        str_detect(str_to_lower(body), "europ|brexit"))
+
 # Save the data
 dat %>% 
   write_rds(here("data","clean_newspapers","publico.rds"))

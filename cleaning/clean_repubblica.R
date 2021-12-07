@@ -55,6 +55,10 @@ dat <- dat0 %>%
   bind_rows(dat1) %>% 
   distinct() 
 
+# Filter europ brexit in title or body
+dat <- dat %>% filter(str_detect(str_to_lower(title), "europ|brexit") |
+                        str_detect(str_to_lower(body), "europ|brexit"))
+
 # Check number of observations and duplicates on url
 dat %>% glimpse
 dat %>% select(title, date, page) %>% distinct() %>% glimpse
@@ -66,4 +70,3 @@ dat %>%
 
 # Save the data
 dat %>% write_rds(here("data","clean_newspapers","repubblica.rds"))
-

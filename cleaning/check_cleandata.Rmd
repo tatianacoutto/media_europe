@@ -27,6 +27,21 @@ dat %>%
   theme_bw() 
 ```
 
+Share of articles with "europ*" or "brexit" in the title
+```{r}
+dat %>% 
+  filter(date > "1985-01-01") %>% 
+  mutate(date = lubridate::as_date(date), 
+         month = date %>% lubridate::floor_date(unit = "months"), 
+         europ_title = str_detect(str_to_lower(title), "europ|brexit")) %>% 
+  group_by(month) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(month, europ_title)) + geom_col() + 
+  theme_bw() + 
+  labs(x="month",y="Share of articles with europ/brexit in title")
+```
+
 # 2. Le Figaro
 
 ```{r}
@@ -42,6 +57,19 @@ dat %>%
   theme_bw() 
 ```
 
+Share of articles with "europ*" or "brexit" in the title
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date), 
+         month = date %>% lubridate::floor_date(unit = "months"), 
+         europ_title = str_detect(str_to_lower(title), "europ|brexit")) %>% 
+  group_by(month) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(month, europ_title)) + geom_col() + 
+  theme_bw() + 
+  labs(x="month",y="Share of articles with europ/brexit in title")
+```
 
 # 3. La Repubblica
 
@@ -58,7 +86,19 @@ dat %>%
   theme_bw() 
 ```
 
-
+Share of articles with "europ*" or "brexit" in the title
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date), 
+         month = date %>% lubridate::floor_date(unit = "months"), 
+         europ_title = str_detect(str_to_lower(title), "europ|brexit")) %>% 
+  group_by(month) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(month, europ_title)) + geom_col() + 
+  theme_bw() + 
+  labs(x="month",y="Share of articles with europ/brexit in title")
+```
 
 
 # 4. Le Corriere della Sera
@@ -76,6 +116,19 @@ dat %>%
   theme_bw() 
 ```
 
+Share of articles with "europ*" or "brexit" in the title
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date), 
+         month = date %>% lubridate::floor_date(unit = "months"), 
+         europ_title = str_detect(str_to_lower(title), "europ|brexit")) %>% 
+  group_by(month) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(month, europ_title)) + geom_col() + 
+  theme_bw() + 
+  labs(x="month",y="Share of articles with europ/brexit in title")
+```
 
 # 5. El Mundo
 
@@ -93,6 +146,20 @@ dat %>%
   theme_bw() 
 ```
 
+Share of articles with "europ*" or "brexit" in the title
+```{r}
+dat %>% 
+  filter(date > "1900-01-01") %>% 
+  mutate(date = lubridate::as_date(date), 
+         month = date %>% lubridate::floor_date(unit = "months"), 
+         europ_title = str_detect(str_to_lower(title), "europ|brexit")) %>% 
+  group_by(month) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(month, europ_title)) + geom_col() + 
+  theme_bw() + 
+  labs(x="month",y="Share of articles with europ/brexit in title")
+```
 
 # 6. El Pais
 
@@ -109,6 +176,19 @@ dat %>%
   theme_bw() 
 ```
 
+Share of articles with "europ*" or "brexit" in the title
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date), 
+         month = date %>% lubridate::floor_date(unit = "months"), 
+         europ_title = str_detect(str_to_lower(title), "europ|brexit")) %>% 
+  group_by(month) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(month, europ_title)) + geom_col() + 
+  theme_bw() + 
+  labs(x="month",y="Share of articles with europ/brexit in title")
+```
 
 
 # 7. Publico
@@ -126,5 +206,18 @@ dat %>%
   theme_bw() 
 ```
 
+Share of articles with "europ*" or "brexit" in the title
+```{r}
+dat %>% 
+  mutate(date = lubridate::as_date(date), 
+         month = date %>% lubridate::floor_date(unit = "months"), 
+         europ_title = str_detect(str_to_lower(title), "europ|brexit")) %>% 
+  group_by(month) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(month, europ_title)) + geom_col() + 
+  theme_bw() + 
+  labs(x="month",y="Share of articles with europ/brexit in title")
+```
 
 

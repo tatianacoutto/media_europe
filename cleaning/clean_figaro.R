@@ -18,6 +18,7 @@ library(newspapers) # remotes::install_github("koheiw/newspapers")
 source(here("cleaning","funs_cleaning.R"))
 
 
+
 ## 1. Data collected with .NET tool
 
 dat <- list.files(here("data","scraped_newspapers","figaro","dennis")) %>% 
@@ -77,11 +78,35 @@ mdat <- here("data","scraped_newspapers","figaro","factiva") %>%
 mdat %>% glimpse
 mdat %>% count(is.na(date))
 
+# Check time coverage
+mdat %>% 
+  ggplot(aes(date)) + geom_histogram(binwidth = 7) 
+
+dat <- dat %>% 
+  bind_rows(mdat) %>% 
+  filter(str_detect(str_to_lower(title), "europ|brexit") |
+           str_detect(str_to_lower(body), "europ|brexit"))
+
+# Issues with newpaper variable for a few (very few articles)
+# For some of these articles, the date is instead of the newspaper, we amend this. 
+dat %>% count(newspaper)
+
+dat <- dat %>% filter((newspaper %>% str_to_lower() %>% str_detect("figaro"))) %>%  
+  bind_rows(
+    dat %>% filter(!(newspaper %>% str_to_lower() %>% str_detect("figaro"))) %>% 
+      mutate(date = newspaper %>% lubridate::dmy(locale="fr_fr"))
+  )
+
+dat <- dat %>% 
+  filter(!is.na(date)) %>% 
+  mutate(newspaper = "Le Figaro")
+  
 # Save the data
 dat %>% 
-  bind_rows(mdat) %>% 
   write_rds(here("data","clean_newspapers","figaro.rds"))
 
+# here("data","clean_newspapers","figaro.rds") %>% 
+#   read_rds() %>% glimpse
 
 
 # ## 3. Other data

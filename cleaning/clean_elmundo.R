@@ -2,11 +2,11 @@
 ## Clean data collected on El Mundo and turn it into rds dataset
 ## 
 ## The raw data has been scraped using a .NET tool  
-## 
+## partly some manual collection on Factiva (1995-2005)
 ##
 ## Tatiana Coutto
 ##
-## October 2021
+## November 2021
 ## 
 
 library(tidyverse)
@@ -58,9 +58,51 @@ dat %>%
   ggplot(aes(date)) + geom_histogram(binwidth = 3600*24*7) 
 
 dat %>% 
-  filter (date >"2015-09-15", date < "2017-01-01")%>%
+  filter (date >"2015-09-15", date < "2018-01-01")%>%
   ggplot(aes(date)) + geom_histogram(binwidth = 3600*24*7) 
+
+
+## 2. Data manually collected
+
+mdat <- here("data","scraped_newspapers","elmundo","factiva") %>% 
+  list.files() %>% 
+  str_subset("html") %>%
+  map_dfr(factiva_to_df_safe,"elmundo") %>% 
+  distinct()
+
+# Check number of observations and missing dates
+mdat %>% count(is.na(date))
+mdat %>% glimpse
+dat %>% glimpse
+
+tmp <- dat %>% 
+  bind_rows(mdat)
+tmp %>% glimpse
+
+dat %>% select(date) %>% skimr::skim()
+dat %>% filter(date > "1000-01-01") %>% select(date) %>% skimr::skim()
+
+dat %>% count(date < "2006-01-01")
+mdat %>% count(date < "2006-01-01")
+tmp %>% count(date < "2006-01-01")
+
+# Filter on europ/brexit in title or body
+dat <- tmp %>% filter(str_detect(str_to_lower(title), "europ|brexit") |
+                        str_detect(str_to_lower(body), "europ|brexit")) 
+
+
+# Get rid of non-El Mundo newspapers
+dat %>% count(newspaper)
+
+dat <- dat %>% 
+  filter(newspaper == "El Mundo")
+
+# Get rid of ugly dates
+dat <- dat %>% 
+  filter(date > "1900-01-01")
 
 # Save the data
 dat %>% 
   write_rds(here("data","clean_newspapers","elmundo.rds"))
+
+# dat <- read_rds(here("data","clean_newspapers","elmundo.rds"))

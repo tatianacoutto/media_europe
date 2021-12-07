@@ -36,9 +36,10 @@ mdat %>% count(is.na(date))
 # Check time coverage
 mdat %>% 
   filter(date > "1985-01-01") %>%
-  ggplot(aes(date)) + geom_histogram(binwidth = 24*7) 
+  ggplot(aes(date)) + geom_histogram(binwidth = 7) 
 
+mdat <- mdat %>% filter(str_detect(str_to_lower(title), "europ|brexit") |
+                          str_detect(str_to_lower(body), "europ|brexit"))
 # Save the data
 mdat %>% 
   write_rds(here("data","clean_newspapers","elpais.rds"))
-<
