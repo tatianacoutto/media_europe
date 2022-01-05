@@ -28,13 +28,13 @@ dat <- here("data","clean_newspapers","lemonde.rds") %>% read_rds() %>%
   bind_rows(
     here("data","clean_newspapers","corriere.rds") %>% read_rds()
   ) %>% 
-  ## El Mundo
-  bind_rows(
-    here("data","clean_newspapers","elmundo.rds") %>% read_rds() 
-  ) %>% 
   ## El Pais
   bind_rows(
     here("data","clean_newspapers","elpais.rds") %>% read_rds()
+  ) %>% 
+  ## El Mundo
+  bind_rows(
+    here("data","clean_newspapers","elmundo.rds") %>% read_rds() 
   ) %>% 
   ## Publico
   bind_rows(
@@ -53,7 +53,18 @@ dat %>%
   group_by(newspaper) %>% 
   skimr::skim()
 
+## Save total dataset
 dat %>% 
   filter(!is.na(date)) %>% 
+  mutate(doc_id = row_number()) %>% 
   write_rds(here::here("data","clean_newspapers","all_newspapers.rds"))
 
+## Create sample of the data
+set.seed(111111)
+dat %>%
+  mutate(month = date %>% lubridate::floor_date(unit = "months")) %>%
+  group_by(newspaper, month) %>%
+  slice_sample(prop = .05) %>%
+  ungroup() %>%
+  select(-month) %>%
+  write_rds(here::here("data","clean_newspapers","sample_newspapers.rds"))

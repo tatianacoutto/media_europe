@@ -1,0 +1,430 @@
+---
+title: "LDA analysis"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(text2vec)
+```
+
+Load all newspaper data
+```{r}
+news <- here::here("data","clean_newspapers","all_newspapers.rds") %>% 
+  read_rds() %>% 
+  mutate(date = lubridate::as_date(date))
+```
+
+
+## 1. French news
+
+Import LDA output
+```{r}
+ntopic <- 50 
+lang <- "fr"
+
+## document-topic matrix
+doc_topic_distr <- read_rds(here::here("data","output",
+                                        paste0("LDA_",lang,"_",ntopic,"_doctop.rds"))) 
+## topic-word matrix (plus other stuff)
+lda_model <- read_rds(here::here("data","output",
+                                 paste0("LDA_fr_",ntopic,"_model.rds")))
+```
+
+Load labelled topics
+```{r}
+## labelled topics
+labelled_topics <- here::here("data","lda_topic_manual_labelling",
+                 paste0("label_lda_",lang,"_",ntopic,".csv")) %>% 
+  read_delim(delim=";") %>% 
+  rename(topic_id=topic)
+```
+
+```{r}
+doc_topic <- tibble(
+  doc_id = doc_topic_distr %>% dimnames() %>% pluck(1) %>% as.numeric()) %>% 
+  bind_cols(
+    doc_topic_distr %>% as_tibble()
+  ) 
+
+topic_month <- doc_topic %>% 
+  left_join(news %>% select(doc_id, date), by = "doc_id") %>% 
+  mutate(yearmonth = date %>% lubridate::floor_date(unit="quarter")) %>% 
+  group_by(yearmonth) %>% 
+  summarise(across(starts_with("V"), mean)) 
+
+topic_month %>% glimpse
+
+toplot <- topic_month %>% 
+  pivot_longer(!yearmonth, names_to="topic_id", 
+               names_prefix = "V", 
+               values_to = "share") %>%
+  mutate(topic_id = paste0("topic",topic_id)) %>% 
+  left_join(labelled_topics %>% select(topic_id, topic_name), 
+            by = "topic_id") %>% 
+  group_by(yearmonth, topic_name) %>% 
+  summarise(share = sum(share)) %>% 
+  ungroup() 
+
+toplot %>% group_by(topic_name) %>%
+  summarise(share = mean(share)) %>%
+  arrange(desc(share)) %>%
+  View()
+
+toplot %>%
+  # filter(topic_name %in% c("eu_pol","econ_finance","migration","brexit",
+  #                     "health","agriculture","conflict")) %>%
+  filter(topic_name %in% c("europe_eu","crisis","party_pol","for_affairs",
+                           "econ_ind","governance","democr_populism")) %>%
+  ggplot(aes(yearmonth, share, group=topic_name, colour=topic_name)) +
+  geom_line() +
+  theme_bw() +
+  labs(x = "", y="topic share", colour="topic")
+# ggsave(here("output","lemonde_lda","topics_share_quarter.png"))
+```
+
+```{r}
+for (ttopic in unique(toplot$topic_name)) {
+  # dev.new()
+  print( toplot %>%
+           filter(topic_name == ttopic) %>%
+           ggplot(aes(yearmonth, share)) +
+           geom_line() +
+           theme_bw() +
+           labs(title = ttopic, x = "", y="topic share") )
+}
+
+# toplot %>%
+#   ggplot(aes(yearmonth, share)) +
+#   geom_line() + 
+#   facet_grid(vars(topic_name))
+```
+
+
+
+## 2. Italian news
+
+Import LDA output
+```{r}
+ntopic <- 50 
+lang <- "it"
+
+## document-topic matrix
+doc_topic_distr <- read_rds(here::here("data","output",
+                                        paste0("LDA_",lang,"_",ntopic,"_doctop.rds"))) 
+## topic-word matrix (plus other stuff)
+lda_model <- read_rds(here::here("data","output",
+                                 paste0("LDA_fr_",ntopic,"_model.rds")))
+```
+
+Load labelled topics
+```{r}
+## labelled topics
+labelled_topics <- here::here("data","lda_topic_manual_labelling",
+                 paste0("label_lda_",lang,"_",ntopic,".csv")) %>% 
+  read_delim(delim=";") %>% 
+  rename(topic_id=topic)
+```
+
+```{r}
+doc_topic <- tibble(
+  doc_id = doc_topic_distr %>% dimnames() %>% pluck(1) %>% as.numeric()) %>% 
+  bind_cols(
+    doc_topic_distr %>% as_tibble()
+  ) 
+
+topic_month <- doc_topic %>% 
+  left_join(news %>% select(doc_id, date), by = "doc_id") %>% 
+  mutate(yearmonth = date %>% lubridate::floor_date(unit="quarter")) %>% 
+  group_by(yearmonth) %>% 
+  summarise(across(starts_with("V"), mean)) 
+
+topic_month %>% glimpse
+
+toplot <- topic_month %>% 
+  pivot_longer(!yearmonth, names_to="topic_id", 
+               names_prefix = "V", 
+               values_to = "share") %>%
+  mutate(topic_id = paste0("topic",topic_id)) %>% 
+  left_join(labelled_topics %>% select(topic_id, topic_name), 
+            by = "topic_id") %>% 
+  group_by(yearmonth, topic_name) %>% 
+  summarise(share = sum(share)) %>% 
+  ungroup() 
+
+toplot %>% group_by(topic_name) %>%
+  summarise(share = mean(share)) %>%
+  arrange(desc(share)) %>%
+  View()
+
+toplot %>%
+  # filter(topic_name %in% c("eu_pol","econ_finance","migration","brexit",
+  #                     "health","agriculture","conflict")) %>%
+  filter(topic_name %in% c("europe_eu","crisis","party_pol","for_affairs",
+                           "econ_ind")) %>%
+  ggplot(aes(yearmonth, share, group=topic_name, colour=topic_name)) +
+  geom_line() +
+  theme_bw() +
+  labs(x = "", y="topic share", colour="topic")
+# ggsave(here("output","lemonde_lda","topics_share_quarter.png"))
+```
+
+```{r}
+for (ttopic in unique(toplot$topic_name)) {
+  # dev.new()
+  print( toplot %>%
+           filter(topic_name == ttopic) %>%
+           ggplot(aes(yearmonth, share)) +
+           geom_line() +
+           theme_bw() +
+           labs(title = ttopic, x = "", y="topic share") )
+}
+```
+
+
+## 3. Spanish news
+
+Import LDA output
+```{r}
+ntopic <- 50 
+lang <- "es"
+
+## document-topic matrix
+doc_topic_distr <- read_rds(here::here("data","output",
+                                        paste0("LDA_",lang,"_",ntopic,"_doctop.rds"))) 
+## topic-word matrix (plus other stuff)
+lda_model <- read_rds(here::here("data","output",
+                                 paste0("LDA_fr_",ntopic,"_model.rds")))
+```
+
+Load labelled topics
+```{r}
+## labelled topics
+labelled_topics <- here::here("data","lda_topic_manual_labelling",
+                 paste0("label_lda_",lang,"_",ntopic,".csv")) %>% 
+  read_delim(delim=";") %>% 
+  rename(topic_id=topic)
+```
+
+```{r}
+doc_topic <- tibble(
+  doc_id = doc_topic_distr %>% dimnames() %>% pluck(1) %>% as.numeric()) %>% 
+  bind_cols(
+    doc_topic_distr %>% as_tibble()
+  ) 
+
+topic_month <- doc_topic %>% 
+  left_join(news %>% select(doc_id, date), by = "doc_id") %>% 
+  mutate(yearmonth = date %>% lubridate::floor_date(unit="quarter")) %>% 
+  group_by(yearmonth) %>% 
+  summarise(across(starts_with("V"), mean)) 
+
+topic_month %>% glimpse
+
+toplot <- topic_month %>% 
+  pivot_longer(!yearmonth, names_to="topic_id", 
+               names_prefix = "V", 
+               values_to = "share") %>%
+  mutate(topic_id = paste0("topic",topic_id)) %>% 
+  left_join(labelled_topics %>% select(topic_id, topic_name), 
+            by = "topic_id") %>% 
+  group_by(yearmonth, topic_name) %>% 
+  summarise(share = sum(share)) %>% 
+  ungroup() 
+
+toplot %>% group_by(topic_name) %>%
+  summarise(share = mean(share)) %>%
+  arrange(desc(share)) %>%
+  View()
+
+toplot %>%
+  # filter(topic_name %in% c("eu_pol","econ_finance","migration","brexit",
+  #                     "health","agriculture","conflict")) %>%
+  filter(topic_name %in% c("europe_eu","crisis","party_pol","for_affairs",
+                           "econ_ind")) %>%
+  ggplot(aes(yearmonth, share, group=topic_name, colour=topic_name)) +
+  geom_line() +
+  theme_bw() +
+  labs(x = "", y="topic share", colour="topic")
+# ggsave(here("output","lemonde_lda","topics_share_quarter.png"))
+```
+
+```{r}
+for (ttopic in unique(toplot$topic_name)) {
+  # dev.new()
+  print( toplot %>%
+           filter(topic_name == ttopic) %>%
+           ggplot(aes(yearmonth, share)) +
+           geom_line() +
+           theme_bw() +
+           labs(title = ttopic, x = "", y="topic share") )
+}
+```
+
+
+# 4. Countries together
+
+Figures by country 
+```{r}
+ntopic <- 50 
+lang <- "fr"
+
+lda_to_toplot <- function(lang="fr",ntopic=50){
+  ## document-topic matrix
+  doc_topic_distr <- read_rds(here::here("data","output",
+                                         paste0("LDA_",lang,"_",ntopic,"_doctop.rds"))) 
+  
+  ## topic-word matrix (plus other stuff)
+  lda_model <- read_rds(here::here("data","output",
+                                   paste0("LDA_",lang,"_",ntopic,"_model.rds")))
+  
+  ## labelled topics
+  labelled_topics <- here::here("data","lda_topic_manual_labelling",
+                                paste0("label_lda_",lang,"_",ntopic,".csv")) %>% 
+    read_delim(delim=";") %>% 
+    rename(topic_id=topic)
+  
+  doc_topic <- tibble(
+    doc_id = doc_topic_distr %>% dimnames() %>% pluck(1) %>% as.numeric()) %>% 
+    bind_cols(
+      doc_topic_distr %>% as_tibble()
+    ) 
+  
+  topic_month <- doc_topic %>% 
+    left_join(news %>% select(doc_id, date), by = "doc_id") %>% 
+    mutate(yearmonth = date %>% lubridate::floor_date(unit="quarter")) %>% 
+    group_by(yearmonth) %>% 
+    summarise(across(starts_with("V"), mean)) 
+  
+  toplot <- topic_month %>% 
+    pivot_longer(!yearmonth, names_to="topic_id", 
+                 names_prefix = "V", 
+                 values_to = "share") %>%
+    mutate(topic_id = paste0("topic",topic_id)) %>% 
+    left_join(labelled_topics %>% select(topic_id, topic_name), 
+              by = "topic_id") %>% 
+    group_by(yearmonth, topic_name) %>% 
+    summarise(share = sum(share)) %>% 
+    ungroup() 
+  
+  return(toplot %>% mutate(language = lang))
+}
+
+toplot <- c("fr","it","es","pt") %>% purrr::map_dfr(lda_to_toplot)
+
+topiclist <- c("migration","health","terrorism","energy_environment",
+               "for_affairs")
+
+# By year-month
+for (ttopic in topiclist) {
+  # dev.new()
+  print( toplot %>%
+           filter(topic_name == ttopic) %>%
+           ggplot(aes(yearmonth, share, colour=language, group=language)) +
+           geom_line() +
+           theme_bw() +
+           labs(title = ttopic, x = "", y="topic share",colour="") )
+}
+
+# By year
+for (ttopic in topiclist) {
+  # dev.new()
+  print( toplot %>%
+           filter(topic_name == ttopic) %>%
+           mutate(year = lubridate::year(yearmonth)) %>% 
+           group_by(language, year) %>% 
+           summarise(share = mean(share)) %>% 
+           ungroup() %>% 
+           ggplot(aes(year, share, colour=language, group=language)) +
+           geom_line() +
+           theme_bw() +
+           labs(title = ttopic, x = "", y="topic share",colour="") )
+}
+
+# toplot %>%
+#   ggplot(aes(yearmonth, share)) +
+#   geom_line() + 
+#   facet_grid(vars(topic_name))
+```
+
+Figures by newspaper 
+```{r}
+lda_to_toplot <- function(lang="fr",ntopic=50){
+  ## document-topic matrix
+  doc_topic_distr <- read_rds(here::here("data","output",
+                                         paste0("LDA_",lang,"_",ntopic,"_doctop.rds"))) 
+  
+  ## topic-word matrix (plus other stuff)
+  lda_model <- read_rds(here::here("data","output",
+                                   paste0("LDA_",lang,"_",ntopic,"_model.rds")))
+  
+  ## labelled topics
+  labelled_topics <- here::here("data","lda_topic_manual_labelling",
+                                paste0("label_lda_",lang,"_",ntopic,".csv")) %>% 
+    read_delim(delim=";") %>% 
+    rename(topic_id=topic)
+  
+  doc_topic <- tibble(
+    doc_id = doc_topic_distr %>% dimnames() %>% pluck(1) %>% as.numeric()) %>% 
+    bind_cols(
+      doc_topic_distr %>% as_tibble()
+    ) 
+  
+  topic_newspaper_month <- doc_topic %>% 
+    left_join(news %>% select(doc_id, date, newspaper), by = "doc_id") %>% 
+    mutate(yearmonth = date %>% lubridate::floor_date(unit="quarter")) %>% 
+    group_by(newspaper, yearmonth) %>% 
+    summarise(across(starts_with("V"), mean)) 
+  
+  toplot <- topic_newspaper_month %>% 
+    pivot_longer(!newspaper:yearmonth, 
+                 names_to="topic_id", 
+                 names_prefix = "V", 
+                 values_to = "share") %>%
+    mutate(topic_id = paste0("topic",topic_id)) %>% 
+    left_join(labelled_topics %>% select(topic_id, topic_name), 
+              by = "topic_id") %>% 
+    group_by(newspaper, yearmonth, topic_name) %>% 
+    summarise(share = sum(share)) %>% 
+    ungroup() 
+  
+  return(toplot %>% mutate(language = lang))
+}
+
+
+toplot <- c("fr","it","es","pt") %>% purrr::map_dfr(lda_to_toplot)
+
+topiclist <- c("migration","health","terrorism","energy_environment",
+               "for_affairs")
+
+# By year-month
+for (ttopic in topiclist) {
+  # dev.new()
+  print( toplot %>%
+           filter(topic_name == ttopic) %>%
+           ggplot(aes(yearmonth, share, colour=language, group=language)) +
+           geom_line() +
+           theme_bw() +
+           labs(title = ttopic, x = "", y="topic share",colour="") )
+}
+
+# By year
+for (ttopic in topiclist) {
+  # dev.new()
+  print( toplot %>%
+           filter(topic_name == ttopic) %>%
+           mutate(year = lubridate::year(yearmonth)) %>% 
+           group_by(newspaper, year) %>% 
+           summarise(share = mean(share)) %>% 
+           ungroup() %>% 
+           ggplot(aes(year, share, colour=newspaper, group=newspaper)) +
+           geom_line() +
+           theme_bw() +
+           labs(title = ttopic, x = "", y="topic share",colour="") )
+}
+
+# toplot %>%
+#   ggplot(aes(yearmonth, share)) +
+#   geom_line() + 
+#   facet_grid(vars(topic_name))
+```

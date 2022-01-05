@@ -1,7 +1,15 @@
 # Data directories
 data/
-analysis/
-   
+quali/
+
+cleaning/old
+analysis/news_events.nb.html
+analysis/summary_stat_des.docx
+analysis/summary_stats.nb.html
+analysis/lda_analysis.nb.html
+analysis/old
+analysis/output
+
 # History files
 .Rhistory
 .Rapp.history

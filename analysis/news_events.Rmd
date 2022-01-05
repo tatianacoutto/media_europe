@@ -1,0 +1,142 @@
+---
+title: "Correlation between euro-news and events"
+output: html_notebook
+---
+
+This script checks the clean datasets. 
+
+```{r, include= FALSE}
+library(here)
+library(tidyverse)
+library(lubridate)
+library(fixest)
+```
+
+Import the clean newspaper dataset. 
+```{r}
+allnews <- here::here("data","clean_newspapers","all_newspapers.rds") %>% 
+  read_rds() %>% 
+  mutate(date = as_date(date))
+
+allnews %>% glimpse
+```
+
+Import EU council meeting dates, and transform them into something useful. 
+```{r}
+events <- here::here("data","event_election_dates","Dates_EU_Council.xlsx") %>% 
+  readxl::read_xlsx() 
+
+council_dates <- events %>% 
+  select(date_beg,date_end) %>% 
+  pmap_dfr(
+    function(date_beg, date_end){
+      tibble(council=1, 
+             date=as_date(as_date(date_beg):as_date(date_end)))
+    })
+
+council_dates %>% glimpse
+
+council_1w_before_dates <- events %>% 
+  select(date_beg) %>% 
+  pmap_dfr(
+    function(date_beg){
+      tibble(council_1w_before=1, 
+             date=as_date((as_date(date_beg)-7):(as_date(date_beg)-1)))
+    })
+
+council_1w_before_dates %>% glimpse
+
+# council_interval <- events %>% rowwise() %>% 
+#   mutate(interv = lubridate::interval(
+#     lubridate::as_date(date_beg), 
+#     lubridate::as_date(date_end))) %>% 
+#   pull(interv) %>% 
+#   as.list()
+
+# Test
+# lubridate::ymd(c("2021-06-20","2021-06-24","2021-06-25", "2021-06-26")) %within% council_interval
+```
+
+```{r}
+epelec <- here::here("data","event_election_dates","dates_EP_elections_dataset_of_electoral_volatility_and_its_internal_components_in_the_european_parliament_elections_since_1979.xlsx") %>% 
+  readxl::read_xlsx() %>% 
+  janitor::clean_names() %>% 
+  filter(country %in% c("France","Italy","Spain","Portugal")) %>% 
+  select(country, election_date) %>% 
+  mutate(
+    election_date = as_date(election_date), 
+    country = case_when(
+      country == "France" ~ "fr", 
+      country == "Italy" ~ "it",  
+      country == "Spain" ~ "es",  
+      country == "Portugal" ~ "pt"
+    )) 
+
+epelec_dates <- epelec %>% 
+  mutate(epelec = 1) %>% 
+  rename(date = election_date, language = country)
+
+epelec_dates %>% glimpse()
+
+epelec_1w_before_dates <- epelec %>% 
+  select(country, election_date) %>% 
+  pmap_dfr(
+    function(country, election_date){
+      tibble(language = country, 
+             epelec_1w_before=1, 
+             date=as_date((as_date(election_date)-7):(as_date(election_date)-1)))
+    })
+
+epelec_1w_before_dates %>% glimpse
+```
+
+allnews %>% filter(date == "1989-06-18") %>% glimpse
+regdb %>% filter(date == "1989-06-17") %>% glimpse
+
+```{r}
+regdb <- allnews %>% 
+  count(newspaper, language, date) %>% 
+  left_join(council_dates, by = "date") %>% 
+  left_join(council_1w_before_dates, by = "date") %>% 
+  left_join(epelec_dates, by = c("language","date")) %>% 
+  left_join(epelec_1w_before_dates, by = c("language","date")) %>% 
+  mutate(dow = date %>% lubridate::wday(), 
+         yearmonth = date %>% lubridate::floor_date(unit="months")) %>% 
+  replace_na(list("council"=0, "council_1w_before"=0, 
+                  "epelec"=0, "epelec_1w_before"=0))
+
+regdb %>% glimpse
+```
+
+```{r}
+regdb %>% skimr::skim()
+```
+
+
+
+```{r}
+regdb %>% 
+  feols(log(n) ~ council + council_1w_before + epelec + epelec_1w_before + 
+          factor(dow) | yearmonth^newspaper, data = .)
+```
+
+
+```{r}
+regdb %>% 
+  filter(newspaper == "Le Monde") %>% 
+  feols(log(n) ~ council + council_1w_before + epelec + epelec_1w_before + 
+          factor(dow) | yearmonth^newspaper, data = .)
+```
+
+
+
+```{r}
+regdb %>% 
+  feols(log(n) ~ i(newspaper, council) + 
+          i(newspaper, epelec) + 
+          i(newspaper, council_1w_before) + 
+          i(newspaper, epelec_1w_before) + 
+          i(newspaper, factor(dow)) | yearmonth^newspaper, data = .) %>% 
+  summary()
+```
+

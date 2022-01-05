@@ -1,0 +1,368 @@
+---
+title: "Summary stats"
+output: html_notebook
+---
+
+This script checks the clean datasets. 
+
+```{r, include= FALSE}
+library(here)
+library(tidyverse)
+```
+
+
+```{r}
+allnews <- here::here("data","clean_newspapers","all_newspapers.rds") %>% read_rds()
+```
+
+
+# 1. Length of articles
+
+```{r}
+allnews %>% 
+  mutate(size_body = nchar(body), 
+         yearmonth = date %>% lubridate::floor_date(unit="months")) %>% 
+  group_by(newspaper, yearmonth) %>% 
+  summarise(size_body_med = median(size_body, na.rm=TRUE)) %>% 
+  ggplot(aes(yearmonth, size_body_med, group=newspaper, colour=newspaper)) + 
+  geom_line() + 
+  labs(x = "month", y = "median number of characters in article") + 
+  theme_bw() 
+```
+
+
+```{r}
+allnews %>% 
+  mutate(size_body = nchar(body), 
+         year = date %>% lubridate::floor_date(unit="years")) %>% 
+  group_by(newspaper, year) %>% 
+  summarise(size_body_med = median(size_body, na.rm=TRUE)) %>% 
+  ggplot(aes(year, size_body_med, group=newspaper, colour=newspaper)) + 
+  geom_line() + 
+  labs(x = "year", y = "median number of characters in article") + 
+  theme_bw() 
+```
+
+
+```{r}
+allnews %>% 
+  mutate(size_body = nchar(body), 
+         year = date %>% lubridate::floor_date(unit="years")) %>% 
+  group_by(language, newspaper, year) %>% 
+  summarise(size_body_med = median(size_body, na.rm=TRUE)) %>% 
+  ggplot(aes(year, size_body_med, group=newspaper, colour=newspaper)) + 
+  geom_line() + 
+  labs(x = "year", y = "median number of characters in article") + 
+  theme_bw() + 
+  facet_grid(vars(language))
+```
+
+
+
+```{r}
+allnews %>% 
+  mutate(size_body = nchar(body)) %>% 
+  group_by(newspaper) %>% 
+  summarise(size_body_med = median(size_body, na.rm=TRUE)) %>% 
+  ggplot(aes(newspaper, size_body_med)) + 
+  geom_col() + 
+  labs(x = "", y = "median number of characters in article") + 
+  theme_bw() 
+```
+
+
+# 2. Presence of "crisis" in the title or the body of text
+
+```{r}
+tmp_news <- allnews %>% 
+  mutate(
+    crisis_title = case_when(
+      language %in% c("es","it") ~ title %>% str_to_lower %>% str_detect("crisi"), 
+      language %in% c("fr","pt") ~ title %>% str_to_lower %>% str_detect("crise"),  
+    ),  
+    # crisis_body = case_when(
+    #   language %in% c("es","it") ~ body %>% str_to_lower %>% str_detect("crisi"), 
+    #   language %in% c("fr","pt") ~ body %>% str_to_lower %>% str_detect("crise"),  
+    # ),  
+    yearmonth = date %>% lubridate::floor_date(unit="months"),  
+    year = date %>% lubridate::floor_date(unit="years")
+  )
+```
+
+
+
+```{r}
+tmp_news %>% 
+  group_by(newspaper, yearmonth) %>% 
+  summarise(crisis_title = mean(crisis_title, na.rm=TRUE)) %>% 
+  ggplot(aes(yearmonth, crisis_title, group=newspaper, colour=newspaper)) + 
+  geom_line() + 
+  labs(x = "month", y = "share of articles with `crisis' in title") + 
+  theme_bw() 
+```
+
+```{r}
+tmp_news %>% 
+  group_by(newspaper, year) %>% 
+  summarise(crisis_title = mean(crisis_title, na.rm=TRUE)) %>% 
+  ggplot(aes(year, crisis_title, group=newspaper, colour=newspaper)) + 
+  geom_line() + 
+  labs(x = "", y = "share of articles with `crisis' in title") + 
+  theme_bw() 
+```
+
+```{r}
+tmp_news %>% 
+  group_by(language,newspaper, year) %>% 
+  summarise(crisis_title = mean(crisis_title, na.rm=TRUE)) %>% 
+  ggplot(aes(year, crisis_title, group=newspaper, colour=newspaper)) + 
+  geom_line() + 
+  labs(x = "", y = "share of articles with `crisis' in title") + 
+  theme_bw() + 
+  facet_grid(vars(language))
+```
+
+```{r}
+tmp_news %>% 
+  group_by(newspaper) %>% 
+  summarise(crisis_title = mean(crisis_title, na.rm=TRUE)) %>% 
+  ggplot(aes(newspaper, crisis_title)) + 
+  geom_col() + 
+  labs(x = "", y = "share of articles with `crisis' in title") + 
+  theme_bw() 
+```
+
+
+```{r}
+# tmp_news %>% 
+#   group_by(newspaper, yearmonth) %>% 
+#   summarise(crisis_body = mean(crisis_body, na.rm=TRUE)) %>% 
+#   ggplot(aes(yearmonth, crisis_body, group=newspaper, colour=newspaper)) + 
+#   geom_line() + 
+#   labs(x = "month", y = "share of articles with `crisis' in text") + 
+#   theme_bw() 
+```
+
+```{r}
+# tmp_news %>% 
+#   group_by(newspaper, year) %>% 
+#   summarise(crisis_body = mean(crisis_body, na.rm=TRUE)) %>% 
+#   ggplot(aes(year, crisis_body, group=newspaper, colour=newspaper)) + 
+#   geom_line() + 
+#   labs(x = "", y = "share of articles with `crisis' in text") + 
+#   theme_bw() 
+```
+
+```{r}
+# tmp_news %>% 
+#   group_by(language, newspaper, year) %>% 
+#   summarise(crisis_body = mean(crisis_body, na.rm=TRUE)) %>% 
+#   ggplot(aes(year, crisis_body, group=newspaper, colour=newspaper)) + 
+#   geom_line() + 
+#   labs(x = "", y = "share of articles with `crisis' in text") + 
+#   theme_bw() + 
+#   facet_grid(vars(language))
+```
+
+```{r}
+# tmp_news %>% 
+#   group_by(newspaper) %>% 
+#   summarise(crisis_body = mean(crisis_body, na.rm=TRUE)) %>% 
+#   ggplot(aes(newspaper, crisis_body)) + 
+#   geom_col() + 
+#   labs(x = "", y = "share of articles with `crisis' in text") + 
+#   theme_bw() 
+```
+
+# 3. Presence of europ/brexit in the title
+
+```{r}
+tmp_news <- allnews %>% 
+  mutate(yearmonth = date %>% lubridate::floor_date(unit = "months"), 
+         year = date %>% lubridate::floor_date(unit = "years"), 
+         europ_title = title %>% str_to_lower %>% str_detect("europ|brexit"))
+```
+
+
+```{r}
+tmp_news %>% 
+  group_by(yearmonth, newspaper) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(yearmonth, europ_title, group=newspaper, colour=newspaper)) + geom_line() + 
+  theme_bw() + 
+  labs(x="month",y="share of articles with europ/brexit in title")
+```
+
+
+```{r}
+tmp_news %>% 
+  group_by(year, newspaper) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(year, europ_title, group=newspaper, colour=newspaper)) + geom_line() + 
+  theme_bw() + 
+  labs(x="",y="share of articles with europ/brexit in title")
+```
+
+```{r}
+tmp_news %>% 
+  group_by(language, newspaper, year) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(year, europ_title, group=newspaper, colour=newspaper)) + geom_line() + 
+  theme_bw() + 
+  labs(x="",y="share of articles with europ/brexit in title") + 
+  facet_grid(vars(language))
+```
+
+```{r}
+tmp_news %>% 
+  group_by(newspaper) %>% 
+  summarise(europ_title = mean(europ_title)) %>% 
+  ungroup() %>% 
+  ggplot(aes(newspaper, europ_title)) + 
+  geom_col() + 
+  labs(x = "", y = "share of articles with europ/brexit in title") + 
+  theme_bw() 
+```
+
+
+# 4. Presence of references to countries
+
+```{r}
+news_countries <- here::here("data","output","news_countries.rds") %>% 
+  read_rds()
+
+news_countries %>% count(country) %>% arrange(desc(n))
+
+allnews %>% 
+  left_join(news_countries)
+
+allnews %>% 
+  inner_join(news_countries, by = "doc_id") %>% 
+  count(newspaper, country) %>% 
+  arrange(newspaper, desc(n)) %>% 
+  group_by(newspaper) %>% slice(1:10)
+```
+
+We now have a dataset with, for each article in our data the number of times it mentions each of the countries in the list. 
+
+Question: what summary stats should we produce out of this dataset? 
+
+# 5. Polarity 
+
+## 5.1. Titles 
+
+```{r}
+news_polarity <- here::here("data","output","news_polarity_title.rds") %>% 
+  read_rds()
+```
+
+```{r}
+allnews %>% 
+  inner_join(news_polarity, by = "doc_id") %>% 
+  mutate(yearmonth = date %>% lubridate::floor_date(unit = "months")) %>% 
+  group_by(yearmonth, newspaper) %>% 
+  summarise(polarity = mean(polarity)) %>% 
+  ungroup() %>% 
+  ggplot(aes(yearmonth, polarity, group=newspaper, colour=newspaper)) + geom_line() + 
+  theme_bw() + 
+  labs(x="month",y="average polarity")
+```
+
+
+```{r}
+allnews %>% 
+  inner_join(news_polarity, by = "doc_id") %>% 
+  mutate(year = date %>% lubridate::floor_date(unit = "years")) %>% 
+  group_by(year, newspaper) %>% 
+  summarise(polarity = mean(polarity)) %>% 
+  ungroup() %>% 
+  ggplot(aes(year, polarity, group=newspaper, colour=newspaper)) + geom_line() + 
+  theme_bw() + 
+  labs(x="",y="average polarity")
+```
+
+```{r}
+allnews %>% 
+  inner_join(news_polarity, by = "doc_id") %>% 
+  mutate(year = date %>% lubridate::floor_date(unit = "years")) %>% 
+  group_by(language, newspaper, year) %>% 
+  summarise(polarity = mean(polarity)) %>% 
+  ungroup() %>% 
+  ggplot(aes(year, polarity, group=newspaper, colour=newspaper)) + geom_line() + 
+  theme_bw() + 
+  labs(x="",y="average polarity") + 
+  facet_grid(vars(language))
+```
+
+```{r}
+allnews %>% 
+  inner_join(news_polarity, by = "doc_id") %>% 
+  group_by(newspaper) %>% 
+  summarise(polarity = mean(polarity)) %>% 
+  ungroup() %>% 
+  ggplot(aes(newspaper, polarity)) + 
+  geom_col() + 
+  labs(x = "", y = "average polarity") + 
+  theme_bw() 
+```
+
+## 5.2. Body of text
+
+```{r}
+news_polarity <- here::here("data","output","news_polarity.rds") %>% 
+  read_rds()
+```
+
+```{r}
+allnews %>% 
+  inner_join(news_polarity, by = "doc_id") %>% 
+  mutate(yearmonth = date %>% lubridate::floor_date(unit = "months")) %>% 
+  group_by(yearmonth, newspaper) %>% 
+  summarise(polarity = mean(polarity)) %>% 
+  ungroup() %>% 
+  ggplot(aes(yearmonth, polarity, group=newspaper, colour=newspaper)) + geom_line() + 
+  theme_bw() + 
+  labs(x="month",y="average polarity")
+```
+
+
+```{r}
+allnews %>% 
+  inner_join(news_polarity, by = "doc_id") %>% 
+  mutate(year = date %>% lubridate::floor_date(unit = "years")) %>% 
+  group_by(year, newspaper) %>% 
+  summarise(polarity = mean(polarity)) %>% 
+  ungroup() %>% 
+  ggplot(aes(year, polarity, group=newspaper, colour=newspaper)) + geom_line() + 
+  theme_bw() + 
+  labs(x="",y="average polarity")
+```
+
+```{r}
+allnews %>% 
+  inner_join(news_polarity, by = "doc_id") %>% 
+  mutate(year = date %>% lubridate::floor_date(unit = "years")) %>% 
+  group_by(language, newspaper, year) %>% 
+  summarise(polarity = mean(polarity)) %>% 
+  ungroup() %>% 
+  ggplot(aes(year, polarity, group=newspaper, colour=newspaper)) + geom_line() + 
+  theme_bw() + 
+  labs(x="",y="average polarity") + 
+  facet_grid(vars(language))
+```
+
+```{r}
+allnews %>% 
+  inner_join(news_polarity, by = "doc_id") %>% 
+  group_by(newspaper) %>% 
+  summarise(polarity = mean(polarity)) %>% 
+  ungroup() %>% 
+  ggplot(aes(newspaper, polarity)) + 
+  geom_col() + 
+  labs(x = "", y = "average polarity") + 
+  theme_bw() 
+```
+

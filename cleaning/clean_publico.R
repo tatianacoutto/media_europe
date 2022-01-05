@@ -37,20 +37,23 @@ dat <- dat %>% select(
 dat %>% glimpse
 
 # Clean authors
-authorsdb <- dat %>% 
-  select(url,authors) %>% 
-  unnest(cols = c(authors)) %>% 
-  select(-authors) %>% 
-  rename(authors=name) %>% 
-  mutate(authors = authors %>% str_remove("PROPOS RECUEILLIS PAR "), 
-         authors = authors %>% str_remove("^PAR "), 
-         authors = authors %>% str_to_title()) 
+# authorsdb <- dat %>%
+#   select(url,authors) %>%
+#   unnest(cols = authors) %>%
+#   select(-authors) %>%
+#   rename(authors=name) %>%
+#   mutate(authors = authors %>% str_remove("PROPOS RECUEILLIS PAR "),
+#          authors = authors %>% str_remove("^PAR "),
+#          authors = authors %>% str_to_title())
+# 
+# authorsdb %>% glimpse
+# 
+# dat <- dat %>%
+#   select(-authors) %>%
+#   left_join(authorsdb, by = "url")
 
-authorsdb %>% glimpse
-
-dat <- dat %>% 
-  select(-authors) %>% 
-  left_join(authorsdb, by = "url") 
+# No authors to save here
+dat <- dat %>% select(-authors)
 
 # There is an issue with dates: it is sometimes equal to 0001-01-01
 # When it is the case, we pick it from the url 
@@ -67,16 +70,28 @@ dat %>% glimpse
 dat %>% count(!is.na(date))
 dat %>% count(date < "1980-01-01")
 
-
-# Check number of observations and duplicates on url
-dat %>% glimpse
-dat %>% select(url) %>% distinct() %>% dim()
+# Keep only non-missing date
+dat <- dat %>% filter(!is.na(date))
 
 # Filter europ brexit
 dat <- dat %>% filter(str_detect(str_to_lower(title), "europ|brexit") |
                         str_detect(str_to_lower(body), "europ|brexit"))
 
+
+# Check number of observations and duplicates on url
+dat %>% glimpse
+dat %>% select(url) %>% distinct() %>% dim()
+
+# Keep only one instance per duplicated url 
+dat <- dat %>% 
+  group_by(url) %>% 
+  arrange(desc(nchar(body))) %>% 
+  filter(row_number()==1) %>% 
+  ungroup() 
+
+dat %>% glimpse
+
 # Save the data
-dat %>% 
+dat %>%
   write_rds(here("data","clean_newspapers","publico.rds"))
 

@@ -6,7 +6,7 @@
 ##
 ## Tatiana Coutto
 ##
-## October 2021
+## December 2021
 ## 
 
 library(tidyverse)
@@ -29,17 +29,19 @@ mdat <- mdat %>%
   mutate(language = "es", 
          newspaper = "El Pais")
 
+mdat <- mdat %>% filter(str_detect(str_to_lower(title), "europ|brexit") |
+                          str_detect(str_to_lower(body), "europ|brexit"))
+
 # Check number of observations and missing dates
 mdat %>% glimpse
 mdat %>% count(is.na(date))
 
 # Check time coverage
 mdat %>% 
-  filter(date > "1985-01-01") %>%
+  # filter(date > "2001-05-20") %>%
+  # filter(date < "2002-02-01") %>%
   ggplot(aes(date)) + geom_histogram(binwidth = 7) 
 
-mdat <- mdat %>% filter(str_detect(str_to_lower(title), "europ|brexit") |
-                          str_detect(str_to_lower(body), "europ|brexit"))
 # Save the data
 mdat %>% 
   write_rds(here("data","clean_newspapers","elpais.rds"))
